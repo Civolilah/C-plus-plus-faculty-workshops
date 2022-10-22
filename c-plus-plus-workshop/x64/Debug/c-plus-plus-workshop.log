@@ -1,7 +1,7 @@
 ﻿  Source.cpp
-C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\c-plus-plus-workshop\Source.cpp(83,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\c-plus-plus-workshop\Source.cpp(97,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\c-plus-plus-workshop\Source.cpp(124,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\c-plus-plus-workshop\Source.cpp(290,1): warning C4326: return type of 'main' should be 'int' instead of 'void'
-C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\c-plus-plus-workshop\Source.cpp(230): warning C4715: 'Nastavnik::operator()': not all control paths return a value
-  c-plus-plus-workshop.vcxproj -> C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\x64\Debug\c-plus-plus-workshop.exe
+C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\Source.cpp(12,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\Source.cpp(226,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\Source.cpp(244,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\Source.cpp(247,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\c-plus-plus-workshop\Source.cpp(313): warning C4715: 'Printer::DodajZabranjenuRijec': not all control paths return a value
+  c-plus-plus-workshop.vcxproj -> C:\Users\38761\Desktop\Civolilah\c-plus-plus-faculty-workshops\x64\Debug\c-plus-plus-workshop.exe

@@ -1,358 +1,507 @@
-#include<iostream>
-#include<string>
-#include<vector>
-#include <exception>
+#include <iostream>
+#include <vector>
 #include <regex>
-/****************************************************************************
-1. SVE KLASE TREBAJU POSJEDOVATI ADEKVATAN DESTRUKTOR
-2. NAMJERNO IZOSTAVLJANJE KOMPLETNIH I/ILI POJEDINIH DIJELOVA DESTRUKTORA KOJI UZROKUJU RUNTIME ERROR CE BITI OZNACENO KAO "RE"
-3. SPAŠAVAJTE PROJEKAT KAKO BI SE SPRIJECILO GUBLJENJE URAÐENOG ZADATKA
-4. NAZIVI FUNKCIJA, TE BROJ I TIP PARAMETARA MORAJU BITI IDENTICNI ONIMA KOJI SU KORIŠTENI U TESTNOM CODE-U, OSIM U SLUCAJU DA POSTOJI ADEKVATAN RAZLOG ZA NJIHOVU MODIFIKACIJU. OSTALE, POMOCNE FUNKCIJE MOŽETE IMENOVATI I DODAVATI PO ŽELJI.
-5. IZUZETAK BACITE U FUNKCIJAMA U KOJIMA JE TO NAZNACENO.
-****************************************************************************/
-
+#include <string>
+#include <exception>
 using namespace std;
-enum Oblast { SoftverskiInzinjering, KomunikacijskiSistemi, SigurnostInformacijskihSistema, InteligentniSistemi };
-const char* oblast_txt[] = { "Softverski inzinjering", "Komunikacijski sistemi", "Sigurnost informacijskih sistema", "Inteligentni sistemi" };
-
-template<class T1, class T2, int max>
-class Kolekcija {
-	T1 _elementi1[max];
-	T2 _elementi2[max];
-	int _trenutno;
+const char* crt = "\n---------------------------------------\n";
+char* Alociraj(const char* nesto)
+{
+	if (nesto == nullptr)
+		return nullptr;
+	int size = strlen(nesto) + 1;
+	char* temp = new char[size];
+	strcpy_s(temp, size, nesto);
+	return temp;
+}
+class DatumVrijeme {
+	int* _dan, * _mjesec, * _godina, * _sati, * _minuti;
 public:
-	Kolekcija()
-	{
-		_trenutno = 0;
-	}
-
-	void AddElement(const T1& elem1, const T2& elem2)
-	{
-		if (_trenutno == max)
-			throw exception("Dostigli ste maksimalan broj elemenata u kolekciji!");
-
-		for (int i = 0; i < _trenutno; i++)
-		{
-			if (_elementi1[i] == elem1 || _elementi2[i] == elem2)
-				throw exception("Nije moguce dodati duple elemente u kolekciju!");
-		}
-
-		_elementi1[_trenutno] = elem1;
-		_elementi2[_trenutno++] = elem2;
+	DatumVrijeme(int dan = 1, int mjesec = 1, int godina = 2000, int sati = 0, int minuti = 0) {
+		_dan = new int(dan);
+		_mjesec = new int(mjesec);
+		_godina = new int(godina);
+		_sati = new int(sati);
+		_minuti = new int(minuti);
 
 	}
-
-	T1* getElementi1Pok()const { return _elementi1; }
-	T2* getElementi2Pok() const { return _elementi2; }
-	T1& getElement1(int lokacija) { return _elementi1[lokacija]; }
-	T2& getElement2(int lokacija) { return _elementi2[lokacija]; }
-	int getTrenutno() const { return _trenutno; }
-
-	friend ostream& operator<<(ostream& COUT, const Kolekcija<T1, T2, max>& obj)
+	DatumVrijeme(const DatumVrijeme& d)
 	{
-		for (size_t i = 0; i < obj._trenutno; i++)
-		{
-			COUT << obj._elementi1[i] << " " << obj._elementi2[i] << endl;
-		}
+		_dan = new int(*d._dan);
+		_mjesec = new int(*d._mjesec);
+		_godina = new int(*d._godina);
+		_sati = new int(*d._sati);
+		_minuti = new int(*d._minuti);
+	}
+	void operator=(const DatumVrijeme& d)
+	{
+		delete _dan; delete _mjesec; delete _godina; delete _sati; delete _minuti; _dan = _mjesec = _godina = _sati = _minuti = nullptr;
+		_dan = new int(*d._dan);
+		_mjesec = new int(*d._mjesec);
+		_godina = new int(*d._godina);
+		_sati = new int(*d._sati);
+		_minuti = new int(*d._minuti);
+	}
+	~DatumVrijeme() {
+		delete _dan; _dan = nullptr;
+		delete _mjesec; _mjesec = nullptr;
+		delete _godina; _godina = nullptr;
+		delete _sati; _sati = nullptr;
+		delete _minuti; _minuti = nullptr;
+
+	}
+	bool operator==(const DatumVrijeme& d)
+	{
+		return *_dan == *d._dan && *_mjesec == *d._mjesec && *_godina == *d._godina && *_sati == *d._sati;
+	}
+	friend ostream& operator<< (ostream& COUT, const DatumVrijeme& obj) {
+		COUT << *obj._dan << "." << *obj._mjesec << "." << *obj._godina << " " << *obj._sati << ":" << *obj._minuti;
 		return COUT;
 	}
 };
-//Deklaracija klase Nastavnik omogucava njeno koristenje u klasi ZavrsniRad, a definicija je data naknadno 
-class Nastavnik;
 
-class ZavrsniRad
-{
-	char* _nazivTeme;
-	Oblast* _oblastTeme;
-	string _datumPrijave; //Format: dd.MM.gggg
-	//U vector pohraniti samo adresu objekta tipa Nastavnik, dakle bez alokacije nove memorije
-	vector<Nastavnik*> _komisija;
-	string _datumOdbrane; //Format: dd.MM.gggg (najranije 2 mjeseca od datuma prijave)
-	int _ocjena;
+template<class T1, class T2 = int>
+class FITKolekcija {
+	T1* _elementi1;
+	T2* _elementi2;
+	int _trenutno;
 public:
-	ZavrsniRad() :_nazivTeme(nullptr), _oblastTeme(nullptr), _datumPrijave("NEMA VRIJEDNOST"), _datumOdbrane("NEMA VRIJEDNOST"), _ocjena(5)
-	{ }
-
-	ZavrsniRad(string nazivTeme, Oblast oblastTeme, string datumPrijave) : _datumPrijave(datumPrijave), _oblastTeme(new Oblast(oblastTeme))
-	{
-		_nazivTeme = new char[nazivTeme.size() + 1];
-		strcpy_s(_nazivTeme, nazivTeme.size() + 1, nazivTeme.c_str());
+	FITKolekcija() {
+		_elementi1 = nullptr;
+		_elementi2 = nullptr;
+		_trenutno = 0;
 	}
-	ZavrsniRad(const ZavrsniRad& z)
+	FITKolekcija(const FITKolekcija& fit)
 	{
-		int size = strlen(z._nazivTeme) + 1;
-		_nazivTeme = new char[size];
-		strcpy_s(_nazivTeme, size, z._nazivTeme);
-		_oblastTeme = new Oblast(*z._oblastTeme);
-		_datumOdbrane = z._datumPrijave;
-		for (int i = 0; i < z._komisija.size(); i++)
+		_trenutno = fit.GetTrenutno();
+		_elementi1 = new T1[_trenutno];
+		_elementi2 = new T2[_trenutno];
+		for (int i = 0; i < _trenutno; i++)
 		{
-			_komisija[i] = z._komisija[i];
+			_elementi1[i] = fit.GetT1()[i];
+			_elementi2[i] = fit.GetT2()[i];
 		}
-		_datumOdbrane = z._datumOdbrane;
-		_ocjena = z._ocjena;
 	}
-	void SetNazivTeme(string naziv)
+	void operator=(const FITKolekcija& fit)
 	{
-		int size = strlen(naziv.c_str()) + 1;
-		_nazivTeme = new char[size];
-		strcpy_s(_nazivTeme, size, naziv.c_str());
-	}
-	void SetOblast(Oblast o)
-	{
-		_oblastTeme = new Oblast(o);
-	}
-	void SetDatum(string datum)
-	{
-		_datumOdbrane = datum;
-	}
-	void SetDatumOdbrane(string datum)
-	{
-		_datumOdbrane = datum;
-	}
-	void SetOcjena(int ocjena)
-	{
-		_ocjena = ocjena;
-	}
-	void operator=(const ZavrsniRad& z)
-	{
-		if (_nazivTeme != nullptr)
+		if (_elementi1 != nullptr && _elementi2 != nullptr)
 		{
-			delete[]_nazivTeme; _nazivTeme = nullptr;
-			delete _oblastTeme; _oblastTeme = nullptr;
+			delete[]_elementi1;
+			delete[]_elementi2;
+			_elementi1 = nullptr;
+			_elementi2 = nullptr;
 		}
-		int size = strlen(z._nazivTeme) + 1;
-		_nazivTeme = new char[size];
-		strcpy_s(_nazivTeme, size, z._nazivTeme);
-		_oblastTeme = new Oblast(*z._oblastTeme);
-		_datumOdbrane = z._datumPrijave;
-		for (int i = 0; i < z._komisija.size(); i++)
+		_trenutno = fit.GetTrenutno();
+		_elementi1 = new T1[_trenutno];
+		_elementi2 = new T2[_trenutno];
+		for (int i = 0; i < _trenutno; i++)
 		{
-			_komisija[i] = z._komisija[i];
+			_elementi1[i] = fit.GetT1()[i];
+			_elementi2[i] = fit.GetT2()[i];
 		}
-		_datumOdbrane = z._datumOdbrane;
-		_ocjena = z._ocjena;
 	}
-	~ZavrsniRad()
-	{
-		delete[] _nazivTeme; _nazivTeme = nullptr;
-		delete _oblastTeme;	_oblastTeme = nullptr;
+	~FITKolekcija() {
+		delete[] _elementi1; _elementi1 = nullptr;
+		delete[] _elementi2; _elementi2 = nullptr;
 	}
-
-	char* GetNazivTeme() { return _nazivTeme; }
-	Oblast GetOblastTeme() { return *_oblastTeme; }
-	string GetDatumOdbrane() { return _datumOdbrane; }
-	int GetOcjena()const { return _ocjena; }
-	vector<Nastavnik*>& GetKomisija() { return _komisija; };
-	Nastavnik& GetKomisijaNaLok(int lok) const { return *_komisija[lok]; };
-	bool operator==(const ZavrsniRad& z)
+	void Dodaj(T1& t, T2& t1)
 	{
-		return *_nazivTeme == *z._nazivTeme && *_oblastTeme == *z._oblastTeme && _datumPrijave == z._datumPrijave;
-	}
-	friend ostream& operator<<(ostream& COUT, const ZavrsniRad& r);
-};
-class Nastavnik
-{
-	string _imePrezime;
-	Oblast _oblastIzboraUZvanje;
-	//Parametar string predstavlja broj indeksa studenta koji prijavljuje zavrsni rad kod odredjenog nastavnika
-	Kolekcija<string, ZavrsniRad, 10> _teme;
-
-public:
-	Nastavnik(string imePrezime, Oblast oblastIzboraUZvanje) : _imePrezime(imePrezime), _oblastIzboraUZvanje(oblastIzboraUZvanje)
-	{}
-
-	string GetImePrezime() { return _imePrezime; }
-	Oblast GetOblast() { return _oblastIzboraUZvanje; }
-	Kolekcija<string, ZavrsniRad, 10>& GetTeme() { return _teme; };
-	void DodajZavrsniRad(string index, string tema, Oblast o, string datum)
-	{
-		for (int i = 0; i < _teme.getTrenutno(); i++)
+		T1* temp = new T1[_trenutno + 1];
+		T2* temp1 = new T2[_trenutno + 1];
+		for (int i = 0; i < _trenutno; i++)
 		{
-			if (strcmp(_teme.getElement2(i).GetNazivTeme(), tema.c_str()) == 0)
+			temp[i] = _elementi1[i];
+			temp1[i] = _elementi2[i];
+		}
+		delete[]_elementi1;
+		delete[]_elementi2;
+		_elementi1 = temp;
+		_elementi2 = temp1;
+		_elementi1[_trenutno] = t;
+		_elementi2[_trenutno++] = t1;
+	}
+	T1* GetT1() const { return _elementi1; }
+	T2* GetT2() const { return _elementi2; }
+	int GetTrenutno()const { return _trenutno; }
+	void Sortiraj()
+	{
+		bool promijeni = true;
+		do
+		{
+			promijeni = false;
+			for (int i = 0; i < _trenutno - 1; i++)
 			{
-				cout << "Ne mozete dodati istu temu." << endl;
-				return;
-			}
-		}
-		if (_oblastIzboraUZvanje != o)
-			throw exception("Ne mozete dodati temu nastavniku koji nema zvanje za to.");
-		ZavrsniRad z(tema.c_str(), o, datum);
-		_teme.AddElement(index, z);
-	}
-	void ZakaziOdbranuRada(string index, string datum, vector<Nastavnik*> komisija)
-	{
-		int brojac = 0;
-		for (int j = 0; j < komisija.size(); j++)
-		{
-			if (_oblastIzboraUZvanje == (*komisija[j]).GetOblast())
-				brojac++;
-		}
-		if (brojac < 2)
-			throw exception("U komisiji moraju biti bar dva nastavnika iz iste oblasti za koju se rad brani.");
-		for (int i = 0; i < _teme.getTrenutno(); i++)
-		{
-			if (_teme.getElement1(i) == index)
-			{
-				if (datum > _teme.getElement2(i).GetDatumOdbrane())
+				if (_elementi1[i + 1] < _elementi1[i])
 				{
-					_teme.getElement2(i).SetDatumOdbrane(datum);
-					for (int j = 0; j < komisija.size(); j++)
-					{
-						_teme.getElement2(i).GetKomisija().push_back(komisija[j]);
-					}
-					return;
+					T1 t = _elementi1[i];
+					T2 t1 = _elementi2[i];
+					_elementi1[i] = _elementi1[i + 1];
+					_elementi1[i + 1] = t;
+					_elementi2[i] = _elementi2[i + 1];
+					_elementi2[i + 1] = t1;
+					promijeni = true;
 				}
-				else
-					throw exception("Datum odbrane ne moze biti manji od datuma prijave.");
+			}
+
+		} while (promijeni);
+	}
+	void DodajNaLokaciju(T1& t, T2& t1, int lok)
+	{
+		if (lok<0 || lok>_trenutno)
+			return;
+		T1* temp = new T1[_trenutno + 1];
+		T2* temp1 = new T2[_trenutno + 1];
+		int j = 0;
+		for (int i = 0; i < _trenutno + 1; i++)
+		{
+			if (i != lok)
+			{
+				temp[i] = _elementi1[j];
+				temp1[i] = _elementi2[j];
+				j++;
 			}
 		}
-		throw exception("Ne postoji student sa tim brojem indexa");
+		delete[]_elementi1;
+		delete[]_elementi2;
+		_elementi1 = temp;
+		_elementi2 = temp1;
+		temp[lok] = t;
+		temp1[lok] = t1;
+		_trenutno++;
 	}
-	bool operator()(string index, int ocjena)
+	void RemoveElement(int lok)
 	{
-		for (int i = 0; i < _teme.getTrenutno(); i++)
+		T1* temp = new T1[_trenutno - 1];
+		T2* temp1 = new T2[_trenutno - 1];
+		for (int i = 0; i < _trenutno; i++)
 		{
-			if (_teme.getElement1(i) == index)
+			if (i != lok)
 			{
-				if (_teme.getElement2(i).GetKomisija().size() == 0)
+				temp[i] = _elementi1[i];
+				temp1[i] = _elementi2[i];
+			}
+		}
+		delete[]_elementi1;
+		delete[]_elementi2;
+		_elementi1 = temp;
+		_elementi2 = temp1;
+		_trenutno--;
+	}
+	FITKolekcija<T1, T2>* GetJedinstveni() {
+		FITKolekcija<T1, T2>* obj = new FITKolekcija<T1, T2>();
+		for (int i = 0; i < _trenutno; i++)
+		{
+			if (_elementi1[i] != _elementi2[i])
+				obj->DodajNaLokaciju(_elementi1[i], _elementi2[i], i);
+		}
+		return obj;
+	}
+	friend ostream& operator<< (ostream& COUT, const FITKolekcija<T1, T2>& obj)
+	{
+		for (int i = 0; i < obj._trenutno; i++)
+			COUT << obj._elementi1[i] << " " << obj._elementi2[i] << endl;
+		return COUT;
+	}
+};
+enum vrstaDokumenta { PDF, DOC, TXT, HTML };
+const char* vrstadokumenta[]{ "PDF", "DOC","TXT", "HTML" };
+
+class Dokument {
+	vrstaDokumenta _vrsta;
+	string _naziv;
+	string _sadrzaj;
+	int _brojStranica;
+public:
+	Dokument() { _brojStranica = 0; }
+	Dokument(vrstaDokumenta vrsta, string naziv) {
+		_naziv = naziv; _vrsta = vrsta; _brojStranica = 0;
+	}
+	string GetNaziv() { return _naziv; };
+	string GetSadrzaj() { return _sadrzaj; };
+	vrstaDokumenta GetVrsta() { return _vrsta; };
+	void UvecajBrojStranica() { _brojStranica++; }
+	int GetBrojStranica() { return _brojStranica; }
+	void DodajSadrzaj(const char* sadrzaj)
+	{
+		int brojstranica = strlen(sadrzaj) / 30;
+		string dodaj = sadrzaj;
+		_sadrzaj = dodaj + " ";
+		_brojStranica = brojstranica;
+	}
+	string GetNaziv()const { return _naziv; }
+	string GetSadrzaj()const { return _sadrzaj; }
+	friend ostream& operator<<(ostream& COUT, const Dokument& obj) {
+		COUT << obj._naziv << "." << vrstadokumenta[obj._vrsta] << " (" << obj._brojStranica << ")\n" << obj._sadrzaj << endl;
+		return COUT;
+	}
+};
+class Uredjaj {
+protected:
+	char* _proizvodjac;
+	char* _model;
+public:
+	Uredjaj(const char* proizvodjac, const char* model) {
+		int vel = strlen(proizvodjac) + 1;
+		_proizvodjac = new char[vel];
+		strcpy_s(_proizvodjac, vel, proizvodjac);
+		vel = strlen(model) + 1;
+		_model = new char[vel];
+		strcpy_s(_model, vel, model);
+	}
+	Uredjaj(const Uredjaj& u)
+	{
+		_proizvodjac = Alociraj(u._proizvodjac);
+		_model = Alociraj(u._model);
+	}
+	void operator=(const Uredjaj& u)
+	{
+		delete[]_proizvodjac; _proizvodjac = nullptr;
+		delete[]_model; _model = nullptr;
+		_proizvodjac = Alociraj(u._proizvodjac);
+		_model = Alociraj(u._model);
+	}
+	~Uredjaj() {
+		delete[] _proizvodjac; _proizvodjac = nullptr;
+		delete[] _model; _model = nullptr;
+	}
+	virtual void Info()const {
+		cout << _proizvodjac << "." << _model << endl;
+	}
+};
+class Printer :public Uredjaj {
+	FITKolekcija<DatumVrijeme, Dokument> _printaniDokumenti;
+	vector<string> _zabranjeneRijeci;
+public:
+	Printer(const char* proizvodjac, const char* model) :Uredjaj(proizvodjac, model)
+	{
+
+	}
+	Printer(const Printer& p) :Uredjaj(p)
+	{
+		_printaniDokumenti = p._printaniDokumenti;
+		for (int i = 0; i < p._zabranjeneRijeci.size(); i++)
+		{
+			_zabranjeneRijeci.push_back(p._zabranjeneRijeci[i]);
+		}
+	}
+	FITKolekcija<DatumVrijeme, Dokument>& GetPrintaniDokumenti() { return _printaniDokumenti; };
+	vector<string>& GetZabranjeneRijeci() { return _zabranjeneRijeci; };
+	void Info()
+	{
+		Uredjaj::Info();
+		cout << "Printani dokumenti:" << endl;
+		cout << _printaniDokumenti << endl;
+		cout << "Zabranjene rijeci:" << endl;
+		for (int i = 0; i < _zabranjeneRijeci.size(); i++)
+		{
+			cout << _zabranjeneRijeci[i] << endl;
+		}
+	}
+	bool DodajZabranjenuRijec(string rijec)
+	{
+		vector<string>::iterator it;
+		it = _zabranjeneRijeci.begin();
+		for (int i = 0; i < _zabranjeneRijeci.size(); i++)
+		{
+			if (*it == rijec)
+			{
+				cout << "Ne mozete dodati istu rijec." << endl;
+				return false;
+			}
+		}
+		_zabranjeneRijeci.push_back(rijec);
+	}
+	bool DaLiSeMozePrinata(Dokument& d)
+	{
+		string prvi = vrstadokumenta[0];
+		string drugi = vrstadokumenta[1];
+		string treci = vrstadokumenta[2];
+		string cetvrti = vrstadokumenta[3];
+		string pravilo = "([a-zA-Z]{5,15})\\.(" + prvi + "|" + drugi + "|" + treci + "|" + cetvrti + ")";
+		regex obj(pravilo);
+		if (regex_match(d.GetNaziv(), obj))
+		{
+			for (int i = 0; i < _zabranjeneRijeci.size(); i++)
+			{
+				if (strstr(d.GetSadrzaj().c_str(), _zabranjeneRijeci[i].c_str()) != nullptr)
 					return false;
 			}
+			return true;
 		}
-		for (int i = 0; i < _teme.getTrenutno(); i++)
+		else
+			return false;
+	}
+	void Printaj(DatumVrijeme& d, Dokument& p)
+	{
+		if (DaLiSeMozePrinata(p))
+			cout << p << endl;
+		else
 		{
-			if (_teme.getElement1(i) == index)
+			_printaniDokumenti.Dodaj(d, p);
+			throw exception("Dokument nema ispravan naziv ili ima nedovoljenu rijec.");
+		}
+	}
+	int GetProsjecanBrojStranicaPoDatumu(DatumVrijeme& d)
+	{
+		int brojstranica = 0;
+		int brojac = 0;
+		for (int i = 0; i < _printaniDokumenti.GetTrenutno(); i++)
+		{
+			if (_printaniDokumenti.GetT1()[i] == d)
 			{
-				_teme.getElement2(i).SetOcjena(ocjena);
-				return true;
+				brojstranica += _printaniDokumenti.GetT2()[i].GetBrojStranica();
+				brojac++;
 			}
 		}
+		brojstranica /= brojac;
+		return brojstranica;
 	}
-	friend ostream& operator<<(ostream& COUT, const Nastavnik& n)
+	string GetTopZabranjenuRijec()
 	{
-		COUT << "Ime i prezime nastavnika: " << n._imePrezime << endl;
-		COUT << "Oblast zvanja: " << oblast_txt[n._oblastIzboraUZvanje] << endl;
-		COUT << n._teme << endl;
-		return cout;
+		int* niz = new int[_zabranjeneRijeci.size()];
+		niz[_zabranjeneRijeci.size()] = { 0 };
+		for (int i = 0; i < _zabranjeneRijeci.size(); i++)
+		{
+			niz[i] = 0;
+		}
+		for (int i = 0; i < _printaniDokumenti.GetTrenutno(); i++)
+		{
+			for (int j = 0; j < _zabranjeneRijeci.size(); j++)
+			{
+				if (strstr(_printaniDokumenti.GetT2()[i].GetSadrzaj().c_str(), _zabranjeneRijeci[j].c_str()) != nullptr)
+					niz[j]++;
+			}
+		}
+		int najveci = 0; int index = 0;
+		for (int i = 0; i < _zabranjeneRijeci.size(); i++)
+		{
+			if (niz[i] > najveci)
+			{
+				najveci = niz[i];
+				index = i;
+			}
+		}
+		return _zabranjeneRijeci[index];
 	}
+	void UkloniDokumente()
+	{
+		for (int i = 0; i < _printaniDokumenti.GetTrenutno(); i++)
+		{
+			if (DaLiSeMozePrinata(_printaniDokumenti.GetT2()[i]) == false)
+				_printaniDokumenti.RemoveElement(i);
+		}
+	}
+	friend ostream& operator<<(ostream& cout, const Printer& p);
 };
-ostream& operator<<(ostream& COUT, const ZavrsniRad& r)
-{
-	COUT << "Tema rada: " << r._nazivTeme << endl;
-	COUT << "Oblast teme: " << oblast_txt[*r._oblastTeme] << endl;
-	COUT << "Datum prijave rada: " << r._datumPrijave << endl;
-	cout << "Komisija: " << endl;
-	for (int i = 0; i < r._komisija.size(); i++)
+ostream& operator<<(ostream& cout, const Printer& p) {
+	p.Uredjaj::Info();
+	cout << p._printaniDokumenti << endl;
+	for (int i = 0; i < p._zabranjeneRijeci.size(); i++)
 	{
-		cout << "Ime i prezime:" << r._komisija[i]->GetImePrezime() << endl;
+		cout << p._zabranjeneRijeci[i] << endl;
 	}
-	cout << "Datum odbrane: " << r._datumOdbrane << endl;
-	cout << "Ocjena: " << r._ocjena << endl;
-	return COUT;
+	return cout;
 }
-string PronadjiNajStudenta(Nastavnik** nastavnici, int max)
+int  main()
 {
-	float suma = 0;
-	int indx = 0;
-	float najjnas = 0;
-	for (int i = 0; i < max; i++)
-	{
-		for (int j = 0; j < nastavnici[i]->GetTeme().getTrenutno(); j++)
-		{
-			suma += nastavnici[i]->GetTeme().getElement2(j).GetOcjena();
-			if (j == nastavnici[i]->GetTeme().getTrenutno() - 1)
-			{
-				suma /= nastavnici[i]->GetTeme().getTrenutno();
-				if (suma > najjnas)
-				{
-					najjnas = suma;
-					indx = i;
-					suma = 0;
-				}
-				else
-					suma = 0;
-			}
-		}
-	}
-	int najjocj = nastavnici[indx]->GetTeme().getElement2(0).GetOcjena();
-	string index = nastavnici[indx]->GetTeme().getElement1(0);
-	for (int i = 0; i < nastavnici[indx]->GetTeme().getTrenutno(); i++)
-	{
-		if (nastavnici[indx]->GetTeme().getElement2(i).GetOcjena() > najjocj)
-		{
-			najjocj = nastavnici[indx]->GetTeme().getElement2(i).GetOcjena();
-			index = nastavnici[indx]->GetTeme().getElement1(i);
-		}
-	}
-	return index;
-}
-void main()
-{
-	const int max = 4;
-	Nastavnik* nastavnici[max];
+	/****************************************************************************
+	1. SVE KLASE TREBAJU POSJEDOVATI ADEKVATAN DESTRUKTOR
+	2. NAMJERNO IZOSTAVLJANJE KOMPLETNIH I/ILI POJEDINIH DIJELOVA DESTRUKTORA KOJI UZROKUJU RUNTIME ERROR CE BITI OZNACENO KAO "RE"
+	3. SPAŠAVAJTE PROJEKAT KAKO BI SE SPRIJECILO GUBLJENJE URAÐENOG ZADATKA
+	4. PROGRAMSKI CODE SE TAKOÐER NALAZI U FAJLU CODE.TXT
+	5. NAZIVI FUNKCIJA, TE BROJ I TIP PARAMETARA MORAJU BITI IDENTICNI ONIMA KOJI SU KORIŠTENI U TESTNOM CODE-U, OSIM U SLUCAJU DA POSTOJI ADEKVATAN RAZLOG ZA NJIHOVU MODIFIKACIJU. OSTALE, POMOCNE FUNKCIJE MOŽETE IMENOVATI I DODAVATI PO ŽELJI.
+	6. IZUZETAK BACITE U FUNKCIJAMA U KOJIMA JE TO NAZNACENO.
+	****************************************************************************/
 
-	nastavnici[0] = new Nastavnik("Denis Music", SoftverskiInzinjering);
-	nastavnici[1] = new Nastavnik("Zanin Vejzovic", KomunikacijskiSistemi);
-	nastavnici[2] = new Nastavnik("Jasmin Azemovic", SigurnostInformacijskihSistema);
-	nastavnici[3] = new Nastavnik("Emina Junuz", SoftverskiInzinjering);
+#pragma region TestiranjeDatumVrijeme
+	DatumVrijeme danas(1, 2, 2017, 10, 15);
+	DatumVrijeme sutra(danas);
+	DatumVrijeme prekosutra;
+	prekosutra = danas;
+	cout << danas << endl << sutra << endl << prekosutra << crt;
+#pragma endregion
+#pragma region FITKolekcija
+	int v6 = 6, v13 = 13, v32 = 32, v63 = 63, v98 = 98, v109 = 109, v196 = 196;
 
+	FITKolekcija<int, int> brojevi;
+	brojevi.Dodaj(v196, v6);
+	brojevi.Dodaj(v13, v32);
+	brojevi.Dodaj(v98, v196);
+	brojevi.Dodaj(v63, v13);
+	brojevi.Dodaj(v98, v196);
+	brojevi.Dodaj(v196, v6);
+
+	cout << brojevi << crt;
+	//SORTIRANJE CLANOVA KOLEKCIJE SE VRŠI U RASTUCEM REDOSLIJEDU NA OSNOVU VRIJEDNOSTI ELEMENTA TIPA T1
+	brojevi.Sortiraj();
+	cout << brojevi << crt;
+	//BROJ 2 SE ODNOSI NA LOKACIJU/INDEKS UNUTAR LISTE NA KOJI JE POTREBNO DODATI NOVE ELEMENTE
+	brojevi.DodajNaLokaciju(v109, v6, 2);
+	cout << brojevi << crt;
+	brojevi.Sortiraj();
+	cout << brojevi << crt;
+	/*METODA GetJedinstveni VRACA LISTU JEDINSTVENIH ELEMENATA TJ. ELEMENATA KOJI NE SADRŽE DUPLIKATE (POJAM DUPLIKAT SE ODNOSI NA ISTE VRIJEDNOSTI ELEMENATA T1 I T2).
+	ELEMENTI KOJI SE DUPLIRAJU SE U OVOJ LISTI TREBAJU POJAVITI SAMO JEDNOM.*/
+	FITKolekcija<int, int>* jedinstveni = brojevi.GetJedinstveni();
+	cout << *jedinstveni << crt;
+	*jedinstveni = brojevi;
+	cout << *jedinstveni << crt;
+
+	Dokument ispitPRIII(DOC, "ispitPRIII.DOC");
+	//BROJ STRANICA DOKUMENTA SE AUTOMATSKI ODREÐUJE PRILIKOM DODAVANJA SADRŽAJA. ZA POTREBE ISPITA PRETPOSTAVLJAMO DA NA JEDNU STRANICU MOŽE STATI 30 ZNAKOVA UKLJUCUJUCI
+	//I RAZMAKE
+	ispitPRIII.DodajSadrzaj("NAMJERNO IZOSTAVLJANJE KOMPLETNIH I/ILI POJEDINIH DIJELOVA DESTRUKTORA KOJI UZROKUJU RUNTIME ERROR CE BITI OZNACENO KAO RE");
+	cout << "Broj stranica -> " << ispitPRIII.GetBrojStranica() << endl;
+	Dokument ispitBaze(DOC, "ispitBaze.PDF");
+	ispitBaze.DodajSadrzaj("PROGRAMSKI CODE SE TAKODER NALAZI U FAJLU CODE.TXT");
+	cout << ispitBaze << endl;//ISPISUJE SVE DOSTUPNE PODATKE O DOKUMENTU
+
+	Printer hp3200("HP", "3200");
+	//PRINTER NECE DOZVOLITI PRINTANJE DOKUMENATA U CIJEM SADRŽAJU SE NALAZI NEKA OD ZABRANJENIH RIJECI
+	hp3200.DodajZabranjenuRijec("RE");// :)
+	hp3200.DodajZabranjenuRijec("RAT");
+	hp3200.DodajZabranjenuRijec("UBITI");
+	hp3200.DodajZabranjenuRijec("RE");// ONEMOGUCITI PONAVLJANJE ZABRANJENIH RIJECI, KORISTITI ITERATORE
+	hp3200.DodajZabranjenuRijec("MRZITI");
 	try
 	{
-		/*Funkcija DodajZavrsniRad ima zadatak da odredjenom nastavniku dodijeli mentorstvo na zavrsnom radu. Sprijeciti dodavanje zavrsnih radova sa
-		istom temom vise puta. Nastavnik moze imati (mentorisati) samo radove iz oblasti za koju posjeduje izbor u zvanje.U slucaju da se nastavniku
-		pokusa dodati rad koji nije iz njegove oblasti funkcija treba da baci izuzetak sa odgovarajucom porukom */
+		/*
+		DA BI PRINTER ISPRINTAO NEKI DOKUMENT MORAJU BITI ZADOVOLJENA SLJEDECA PRAVILA:
+		1. NAZIV DOKUMENTA MORA BITI U SLJEDECEM FORMATU npr: ispitPRIII.doc
+		NAZIV DOKUMENTA MOŽE SADRŽAVATI SAMO SLOVA (NAJMANJE 5, NAJVIŠE 15), A EKSTENZIJA MOŽE
+		BITI SAMO NEKA OD DOZVOLJENIH VRSTOMDOKUMENTA
+		2. SADRŽAJ DOKUMENTA U SEBI NE SMIJE POSJEDOVATI NITI JEDNU ZABRANJENU RIJEC
+		UKOLIKO NEKI OD NAVEDENIH USLOVA NIJE ZADOVOLJEN FUNKCIJA TREBA DA BACI EXCEPTION SA
+		ODGOVARAJUCOM PORUKOM, ALI CE DOKUMENT BITI POHRANJEN U KOLEKCIJU _printaniDokumenti.
+		UKOLIKO DOKUMENT ISPUNJAVA SVE USLOVE ZA PRINTANJE POTREBNO JE NA KONZOLU ISPISATI
+		SADRŽAJ DOKUMENTA KOJI SE PRINTA
 
-		//indeks, naslov, oblast, datum prijave 
-		nastavnici[0]->DodajZavrsniRad("IB130011", "Multimedijalni informacijski sistem za visoko-obrazovnu ustanovu", SoftverskiInzinjering, "01.04.2017");
-		nastavnici[0]->DodajZavrsniRad("IB120051", "Sistem za podršku rada kablovskog operatera", SoftverskiInzinjering, "03.03.2017");
+		*/
+		hp3200.Printaj(danas, ispitPRIII);
+		hp3200.Printaj(danas, ispitBaze);
 
-		nastavnici[1]->DodajZavrsniRad("IB140102", "Prakticna analiza sigurnosti bežicnih racunarskih mreža", KomunikacijskiSistemi, "22.08.2017");
+		/*
+		IMPLEMENTIRATI PRINTANJE U ZASEBNIM NITIMA UZ KORIŠTENJE sleep_for FUNKCIJE
+		VODITI RACUNA O DIJELJENJU ZAJEDNICKIH RESURSA
+		*/
 
-		nastavnici[2]->DodajZavrsniRad("IB140002", "Primjena teorije informacija u procesu generisanja kriptografskih kljuceva", SigurnostInformacijskihSistema, "10.09.2017");
-
-		vector<Nastavnik*> komisija;//formira se komisija
-		komisija.push_back(nastavnici[0]);
-		komisija.push_back(nastavnici[2]);
-		komisija.push_back(nastavnici[3]);
-
-		/*Funkcija ZakaziOdbranuRada ima zadatak da studentu sa proslijedjenim brojem indeksa zakaze odbranu zavrsnog rada sto podrazumijeva definisanje
-		datuma odbrane i liste clanova komisije pred kojima ce student braniti zavrsni rad.	Odbrana rada se moze zakazati samo studentu koji je rad
-		prethodno prijavio. Komisiju trebaju ciniti najmanje 2 nastavnika koji imaju izbor u zvanje u oblasti kojoj pripada tema rada. Datum odbrane
-		ne smije biti manji od datuma prijave. U slucaju da bilo koji od navedenih uslova nije ispunjen funkcija treba	da baci izuzetak*/
-		nastavnici[0]->ZakaziOdbranuRada("IB130011", "25.09.2017", komisija);
-		//nastavnici[0]->ZakaziOdbranuRada("IB130111", "25.09.2017", komisija);//student sa brojem indeksa IB130111 jos uvijek nije prijavio rad
-
-		/*Studentu sa brojem indeksa IB130011 dodjeljuje ocjenu 8 na zavrsnom radu. Uslov za dodjelu ocjene je da student posjeduje definisan datum
-		odbrane i listu clanova komisije. U zavisnosti od uspjesnosti izvrsenja, funkcija vraca true ili false*/
-
-		if ((*nastavnici[0])("IB130011", 8))
-			cout << "Uspjesno ste ocijenili zavrsni rad!" << endl;
-
-		/*Ispisuje sve podatke o nastavniku i njegovim mentorstvima. Za clanove komisije je dovoljno ispisati samo ime i prezime.*/
-		cout << *nastavnici[0] << endl;
-
-		/*Funkcija PronadjiNajStudenta ima zadatak da pronadje broj indeksa studenta koji je na zavrsnom radu ostvario najvecu ocjenu kod nastavnika
-		koji posjeduje najvecu prosjecnu ocjenu na zavrsnim radovima. Ukoliko se kod nastavnika sa najvecom prosjecnom ocjenom pojavi vise studenata
-		sa istom ocjenom, onda funkcija vraca broj indeksa prvog pronadjenog studenta. Svim studentima koji su odbranili rad kod nastavnika sa najvecom
-		prosjecno ocjenom, u zasebnom thread.u, poslati email poruku (mail adresa: brojIndeksa@edu.fit.ba) sa sadrzajem da su svoj zavrsni rad uspjesno
-		odbranili sa vecom ili manjom ocjenom od prosjecne. Ukoliko niti jedan od nastavnika ne posjeduje evidentirano mentorstvo na zavrsnom radu,
-		funkcija vraca tekst: NIJE PRONADJEN*/
-
-		cout << "Najsupjesniji student: " << PronadjiNajStudenta(nastavnici, max) << endl;
-
-		//Baca izuzetak zbog neadekvatnog izbora u zvanje, odnosno oblasti
-		//nastavnici[2]->DodajZavrsniRad("IB150008", "Razvoj sistema autentifikacije na osnovu biometrije glasa", InteligentniSistemi, "15.05.2017");
 	}
-	catch (exception& ex)
+	catch (exception& err)
 	{
-		cout << "GRESKA -> " << ex.what() << endl;
+		cout << err.what() << endl;
 	}
 
-	for (int i = 0; i < max; i++)
-	{
-		delete nastavnici[i];
-		nastavnici[i] = nullptr;
-	}
+	//KOD POREÐENJA DATUMA PRINTANJA NIJE POTREBNO POREDITI MINUTE, SAMO DATUM I SATE
+	cout << "Prosjecan broj printanih stranica za " << danas << " je -> " << hp3200.GetProsjecanBrojStranicaPoDatumu(danas) << crt;
+	cout << "Najcesce koristena zabranjena rijec je -> " << hp3200.GetTopZabranjenuRijec() << crt;
 
+	Printer hp4000(hp3200);
+	cout << "Prosjecan broj printanih stranica za " << danas << " je -> " << hp4000.GetProsjecanBrojStranicaPoDatumu(danas) << crt;
+	cout << "Najcesce koristena zabranjena rijec je -> " << hp4000.GetTopZabranjenuRijec() << crt;
+	hp4000.UkloniDokumente();//UKLANJA SVE DOKUMENTE KOJI NISU ZADOVOLJILI USLOVE ZA PRINTANJE
+	cout << hp4000 << crt;
+
+#pragma endregion
 	system("pause>0");
+	return 0;
 }
